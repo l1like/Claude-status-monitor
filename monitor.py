@@ -9,8 +9,13 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 import pystray
 
-STATUS_FILE = Path(__file__).parent / "status.json"
-PID_FILE = Path(__file__).parent / "monitor.pid"
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.executable).parent
+else:
+    BASE_DIR = Path(__file__).parent
+
+STATUS_FILE = BASE_DIR / "status.json"
+PID_FILE = BASE_DIR / "monitor.pid"
 
 STATUS_COLORS = {
     "idle": (128, 128, 128),

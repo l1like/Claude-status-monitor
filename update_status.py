@@ -3,7 +3,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-STATUS_FILE = Path(__file__).parent / "status.json"
+if getattr(sys, 'frozen', False):
+    BASE_DIR = Path(sys.executable).parent
+else:
+    BASE_DIR = Path(__file__).parent
+
+STATUS_FILE = BASE_DIR / "status.json"
 VALID = {"idle", "running", "done", "confirm", "error"}
 
 
