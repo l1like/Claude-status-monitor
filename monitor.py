@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import threading
+import winreg
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -43,6 +44,42 @@ BREATH = {
 
 BREATH_PERIOD = 2.0     # seconds for one full breathe cycle
 BREATH_MIN = 0.25        # dimmest brightness factor
+
+AUTOSTART_REG_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
+AUTOSTART_REG_NAME = "ClaudeStatusMonitor"
+
+
+def get_autostart():
+    """检查是否已设置开机自启"""
+    try:
+        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, AUTOSTART_REG_KEY)
+        winreg.QueryValueEx(key, AUTOSTART_REG_NAME)
+        winreg.CloseKey(key)
+        return True
+    except FileNotFoundError:
+        return False
+
+
+def set_autostart(enabled):
+    """设置或取消开机自启"""
+    key = winreg.OpenKey(
+        winreg.HKEY_CURRENT_USER, AUTOSTART_REG_KEY, 0, winreg.KEY_SET_VALUE
+    )
+    if enabled:
+        exe_path = str(BASE_DIR / "monitor.exe")
+        winreg.SetValueEx(key, AUTOSTART_REG_NAME, 0, winreg.REG_SZ, exe_path)
+    else:
+        try:
+            winreg.DeleteValue(key, AUTOSTART_REG_NAME)
+        except FileNotFoundError:
+            pass
+    winreg.CloseKey(key)
+
+
+def on_toggle_autostart(icon, item):
+    new_state = not item.checked
+    set_autostart(new_state)
+    item.checked = new_state
 
 
 def lerp_color(rgb, factor):
@@ -88,7 +125,15 @@ def main():
 
     icon = create_icon(STATUS_COLORS["idle"])
     tray = pystray.Icon("claude-status", icon, LABELS["idle"])
-    tray.menu = pystray.Menu(pystray.MenuItem("Quit", lambda _: on_quit(tray)))
+    tray.menu = pystray.Menu(
+        pystray.MenuItem(
+            "开机自启",
+            on_toggle_autostart,
+            checked=lambda item: get_autostart(),
+        ),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem("退出", lambda _: on_quit(tray)),
+    )
 
     def anim_loop():
         last_check = 0.0
