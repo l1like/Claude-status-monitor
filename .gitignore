@@ -5,3 +5,6 @@ __pycache__/
 *.pyc
 monitor.pid
 status.json
+build/
+dist/
+*.spec

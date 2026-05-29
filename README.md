@@ -13,6 +13,15 @@
 
 ## 快速开始
 
+### 方式一：下载 exe（无需 Python）
+
+从 [Releases](https://github.com/l1like/Claude-status-monitor/releases) 下载 `monitor.exe` 和 `update_status.exe`，放到同一目录下。
+
+1. 双击 `monitor.exe` 启动托盘图标
+2. 在 `~/.claude/settings.json` 中配置 hooks（见[配置](#配置)），命令路径指向 `update_status.exe` 的实际位置
+
+### 方式二：从源码运行
+
 ```bash
 pip install -r requirements.txt
 python monitor.py
@@ -22,28 +31,92 @@ python monitor.py
 
 托盘图标右键 → **Quit** 退出。
 
+### 打包为 exe
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed monitor.py
+pyinstaller --onefile update_status.py
+# 产物在 dist/ 目录
+```
+
 ## 工作原理
 
 ```
-Claude Code hooks  →  update_status.py  →  status.json  →  monitor.py  →  托盘图标
+Claude Code hooks  →  update_status.exe  →  status.json  →  monitor.exe  →  托盘图标
 ```
 
-1. **update_status.py** — CLI 脚本，写入状态到 `status.json`
-2. **monitor.py** — 托盘程序，每 500ms 轮询 `status.json`，更新图标颜色
-3. **Claude Code hooks** — 在 `~/.claude/settings.json` 中配置，自动调用 `update_status.py`
+1. **update_status** — CLI 工具，写入状态到 `status.json`
+2. **monitor** — 托盘程序，每 500ms 轮询 `status.json`，更新图标颜色
+3. **Claude Code hooks** — 在 `~/.claude/settings.json` 中配置，自动调用 `update_status`
 
 ## 配置
 
-Hooks 配置在用户级 `~/.claude/settings.json`，全局生效：
+在用户级 `~/.claude/settings.json` 中添加以下 hooks，**注意替换路径**：
 
 ```json
 "hooks": {
-  "SessionStart":          → done     (启动/空闲)
-  "UserPromptSubmit":      → running  (收到消息)
-  "Stop":                  → done     (响应结束)
-  "PostToolUse":           → running  (工具执行完，恢复运行)
-  "PermissionRequest":     → confirm  (需要手动确认)
-  "PostToolUseFailure":    → error    (工具出错)
+  "SessionStart": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "C:/path/to/status-monitor/update_status.exe done"
+        }
+      ]
+    }
+  ],
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "C:/path/to/status-monitor/update_status.exe running"
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "C:/path/to/status-monitor/update_status.exe done"
+        }
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "C:/path/to/status-monitor/update_status.exe running"
+        }
+      ]
+    }
+  ],
+  "PermissionRequest": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "C:/path/to/status-monitor/update_status.exe confirm"
+        }
+      ]
+    }
+  ],
+  "PostToolUseFailure": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "C:/path/to/status-monitor/update_status.exe error"
+        }
+      ]
+    }
+  ]
 }
 ```
 
