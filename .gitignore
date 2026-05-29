@@ -1,0 +1,7 @@
+.claude/
+.idea/
+.venv/
+__pycache__/
+*.pyc
+monitor.pid
+status.json
