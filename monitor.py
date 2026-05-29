@@ -43,7 +43,7 @@ BREATH = {
 }
 
 BREATH_PERIOD = 2.0     # seconds for one full breathe cycle
-BREATH_MIN = 0.25        # dimmest brightness factor
+BREATH_MIN = 0.45        # dimmest brightness factor
 
 AUTOSTART_REG_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 AUTOSTART_REG_NAME = "ClaudeStatusMonitor"
